@@ -64,7 +64,7 @@ async def test_login_empty_password():
 @pytest.mark.asyncio
 async def test_login_invalid_credentials():
     url = f'{API_BASE_URL}/api/access/login'
-    payload = {'username': 'invaliduser', 'password': 'wrongpass'}
+    payload = {'username': 'invaliduser', 'password': 'invalidpass'}
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
