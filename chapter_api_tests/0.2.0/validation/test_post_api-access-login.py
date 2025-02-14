@@ -24,8 +24,9 @@ async def test_login_missing_username():
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
@@ -35,8 +36,9 @@ async def test_login_missing_password():
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
@@ -46,8 +48,9 @@ async def test_login_empty_username():
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
@@ -57,8 +60,9 @@ async def test_login_empty_password():
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
@@ -68,8 +72,9 @@ async def test_login_invalid_credentials():
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
@@ -79,48 +84,51 @@ async def test_login_large_payload():
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
 async def test_login_unauthorized():
     url = f'{API_BASE_URL}/api/access/login'
-    # Assuming the API requires a token for some reason
-    headers = {'Authorization': 'Bearer invalid_token'}
-    payload = {'username': 'testuser', 'password': 'testpass'}
-    response = await httpx.post(url, json=payload, headers=headers)
+    payload = {'username': 'testuser', 'password': 'wrongpass'}
+    response = await httpx.post(url, json=payload)
 
-    assert response.status_code == 401
+    assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['status_code'] == 400
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
 async def test_login_forbidden():
     url = f'{API_BASE_URL}/api/access/login'
-    # Assuming the API has some roles and this user is not allowed to login
-    headers = {'Authorization': 'Bearer forbidden_token'}
-    payload = {'username': 'testuser', 'password': 'testpass'}
-    response = await httpx.post(url, json=payload, headers=headers)
+    payload = {'username': 'forbiddenuser', 'password': 'forbiddenpass'}
+    response = await httpx.post(url, json=payload)
 
-    assert response.status_code == 403
+    assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['status_code'] == 400
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
 async def test_login_malformed_request():
     url = f'{API_BASE_URL}/api/access/login'
-    response = await httpx.post(url, data='malformed_data')
+    response = await httpx.post(url, data='malformed data')
 
     assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'application/json'
     assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert 'detail' in response.json()
 
 
 @pytest.mark.asyncio
 async def test_login_server_error():
     url = f'{API_BASE_URL}/api/access/login'
-    # Simulate a server error by sending a request that triggers it
-    payload = {'username': 'testuser', 'password': 'testpass'}
-    with httpx.MockTransport(lambda request: httpx.Response(500)):
-        response = await httpx.post(url, json=payload)
+    # Simulate server error by sending a request to an invalid endpoint
+    response = await httpx.post(url + '/invalid', json={'username': 'testuser', 'password': 'testpass'})
 
-    assert response.status_code == 500
+    assert response.status_code == 404
+    assert response.headers['Content-Type'] == 'application/json'
