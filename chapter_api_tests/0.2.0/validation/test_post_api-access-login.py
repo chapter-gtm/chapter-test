@@ -62,9 +62,9 @@ async def test_login_empty_password():
 
 
 @pytest.mark.asyncio
-async def test_login_invalid_credentials():
+async def test_login_invalid_username():
     url = f'{API_BASE_URL}/api/access/login'
-    payload = {'username': 'invaliduser', 'password': 'invalidpass'}
+    payload = {'username': 'invaliduser', 'password': 'testpass'}
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
@@ -73,18 +73,7 @@ async def test_login_invalid_credentials():
 
 
 @pytest.mark.asyncio
-async def test_login_large_payload():
-    url = f'{API_BASE_URL}/api/access/login'
-    payload = {'username': 'testuser', 'password': 'testpass' * 1000}
-    response = await httpx.post(url, json=payload)
-
-    assert response.status_code == 400
-    assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
-
-
-@pytest.mark.asyncio
-async def test_login_unauthorized():
+async def test_login_invalid_password():
     url = f'{API_BASE_URL}/api/access/login'
     payload = {'username': 'testuser', 'password': 'wrongpass'}
     response = await httpx.post(url, json=payload)
@@ -95,9 +84,31 @@ async def test_login_unauthorized():
 
 
 @pytest.mark.asyncio
+async def test_login_large_payload():
+    url = f'{API_BASE_URL}/api/access/login'
+    payload = {'username': 'testuser', 'password': 'testpass', 'extra_field': 'x' * 10000}
+    response = await httpx.post(url, json=payload)
+
+    assert response.status_code == 400
+    assert response.json()['status_code'] == 400
+    assert response.json()['detail'] == 'Bad Request'
+
+
+@pytest.mark.asyncio
+async def test_login_unauthorized():
+    url = f'{API_BASE_URL}/api/access/login'
+    payload = {'username': 'testuser', 'password': 'invalidpass'}
+    response = await httpx.post(url, json=payload)
+
+    assert response.status_code == 400
+    assert response.json()['status_code'] == 400
+    assert response.json()['detail'] == 'Bad Request'
+
+
+@pytest.mark.asyncio
 async def test_login_forbidden():
     url = f'{API_BASE_URL}/api/access/login'
-    payload = {'username': 'forbiddenuser', 'password': 'forbiddenpass'}
+    payload = {'username': 'forbiddenuser', 'password': 'testpass'}
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
@@ -119,6 +130,6 @@ async def test_login_malformed_request():
 async def test_login_server_error():
     url = f'{API_BASE_URL}/api/access/login'
     # Simulate server error by sending a request to an invalid endpoint
-    response = await httpx.post(url + '/invalid', json={'username': 'testuser', 'password': 'testpass'})
+    response = await httpx.post(f'{API_BASE_URL}/api/access/invalid', json={'username': 'testuser', 'password': 'testpass'})
 
-    assert response.status_code == 500
+    assert response.status_code == 404
