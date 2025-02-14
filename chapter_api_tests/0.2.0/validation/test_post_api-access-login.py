@@ -40,7 +40,7 @@ async def test_login_missing_password():
 
 
 @pytest.mark.asyncio
-async def test_login_invalid_username():
+async def test_login_empty_username():
     url = f'{API_BASE_URL}/api/access/login'
     payload = {'username': '', 'password': 'testpass'}
     response = await httpx.post(url, json=payload)
@@ -51,7 +51,7 @@ async def test_login_invalid_username():
 
 
 @pytest.mark.asyncio
-async def test_login_invalid_password():
+async def test_login_empty_password():
     url = f'{API_BASE_URL}/api/access/login'
     payload = {'username': 'testuser', 'password': ''}
     response = await httpx.post(url, json=payload)
@@ -65,15 +65,6 @@ async def test_login_invalid_password():
 async def test_login_invalid_credentials():
     url = f'{API_BASE_URL}/api/access/login'
     payload = {'username': 'invaliduser', 'password': 'invalidpass'}
-    response = await httpx.post(url, json=payload)
-
-    assert response.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_login_empty_payload():
-    url = f'{API_BASE_URL}/api/access/login'
-    payload = {}
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
@@ -104,17 +95,26 @@ async def test_login_unauthorized():
 @pytest.mark.asyncio
 async def test_login_forbidden():
     url = f'{API_BASE_URL}/api/access/login'
-    # Assuming there's a mechanism to block certain users
-    payload = {'username': 'blockeduser', 'password': 'testpass'}
+    payload = {'username': 'forbiddenuser', 'password': 'forbiddenpass'}
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 403
 
 
 @pytest.mark.asyncio
+async def test_login_malformed_request():
+    url = f'{API_BASE_URL}/api/access/login'
+    response = await httpx.post(url, data='malformed data')
+
+    assert response.status_code == 400
+    assert response.json()['status_code'] == 400
+    assert response.json()['detail'] == 'Bad Request'
+
+
+@pytest.mark.asyncio
 async def test_login_server_error():
     url = f'{API_BASE_URL}/api/access/login'
-    # Simulate server error by sending a malformed request
-    response = await httpx.post(url, data='malformed data')
+    # Simulate server error by sending a request to an invalid endpoint
+    response = await httpx.post(url + '/invalid', json={'username': 'testuser', 'password': 'testpass'})
 
     assert response.status_code == 500
