@@ -62,7 +62,7 @@ async def test_login_empty_password():
 
 
 @pytest.mark.asyncio
-async def test_login_invalid_credentials():
+async def test_login_invalid_username():
     url = f'{API_BASE_URL}/api/access/login'
     payload = {'username': 'invaliduser', 'password': 'wrongpass'}
     response = await httpx.post(url, json=payload)
@@ -73,10 +73,9 @@ async def test_login_invalid_credentials():
 
 
 @pytest.mark.asyncio
-async def test_login_large_payload():
+async def test_login_invalid_json():
     url = f'{API_BASE_URL}/api/access/login'
-    payload = {'username': 'testuser', 'password': 'testpass' * 1000}
-    response = await httpx.post(url, json=payload)
+    response = await httpx.post(url, data='not a json')
 
     assert response.status_code == 400
     assert response.json()['status_code'] == 400
@@ -102,19 +101,29 @@ async def test_login_forbidden():
 
 
 @pytest.mark.asyncio
-async def test_login_malformed_request():
+async def test_login_large_payload():
     url = f'{API_BASE_URL}/api/access/login'
-    response = await httpx.post(url, data='malformed data')
+    payload = {'username': 'testuser', 'password': 'testpass', 'extra_field': 'x' * 10000}
+    response = await httpx.post(url, json=payload)
 
-    assert response.status_code == 400
-    assert response.json()['status_code'] == 400
-    assert response.json()['detail'] == 'Bad Request'
+    assert response.status_code == 201
+
+
+@pytest.mark.asyncio
+async def test_login_empty_response():
+    url = f'{API_BASE_URL}/api/access/login'
+    payload = {'username': 'emptyresponse', 'password': 'testpass'}
+    response = await httpx.post(url, json=payload)
+
+    assert response.status_code == 204
+    assert response.text == ''
 
 
 @pytest.mark.asyncio
 async def test_login_server_error():
     url = f'{API_BASE_URL}/api/access/login'
-    # Simulate server error by sending a request to an invalid endpoint
-    response = await httpx.post(url + '/invalid', json={'username': 'testuser', 'password': 'testpass'})
+    payload = {'username': 'testuser', 'password': 'testpass'}
+    # Simulate server error by using an invalid endpoint
+    response = await httpx.post(url + '/invalid', json=payload)
 
     assert response.status_code == 500
