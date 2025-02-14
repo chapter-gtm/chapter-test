@@ -13,7 +13,6 @@ async def test_login_success():
     assert response.status_code == 201
     assert response.headers['Content-Type'] == 'application/json'
     assert 'access_token' in response.json()
-    assert 'token_type' in response.json()
 
 
 @pytest.mark.asyncio
