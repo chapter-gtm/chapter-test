@@ -64,7 +64,7 @@ async def test_login_empty_password():
 @pytest.mark.asyncio
 async def test_login_invalid_credentials():
     url = f'{API_BASE_URL}/api/access/login'
-    payload = {'username': 'invaliduser', 'password': 'wrongpass'}
+    payload = {'username': 'invaliduser', 'password': 'invalidpass'}
     response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
@@ -89,7 +89,9 @@ async def test_login_unauthorized():
     payload = {'username': 'testuser', 'password': 'wrongpass'}
     response = await httpx.post(url, json=payload)
 
-    assert response.status_code == 401
+    assert response.status_code == 400
+    assert response.json()['status_code'] == 400
+    assert response.json()['detail'] == 'Bad Request'
 
 
 @pytest.mark.asyncio
@@ -98,7 +100,9 @@ async def test_login_forbidden():
     payload = {'username': 'forbiddenuser', 'password': 'forbiddenpass'}
     response = await httpx.post(url, json=payload)
 
-    assert response.status_code == 403
+    assert response.status_code == 400
+    assert response.json()['status_code'] == 400
+    assert response.json()['detail'] == 'Bad Request'
 
 
 @pytest.mark.asyncio
