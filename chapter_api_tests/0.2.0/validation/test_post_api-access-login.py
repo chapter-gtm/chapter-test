@@ -60,7 +60,8 @@ async def test_login_invalid_credentials():
 @pytest.mark.asyncio
 async def test_login_empty_payload():
     url = f'{API_BASE_URL}/api/access/login'
-    response = await httpx.post(url, json={})
+    payload = {}
+    response = await httpx.post(url, json=payload)
 
     assert response.status_code == 400
     assert response.headers['Content-Type'] == 'application/json'
@@ -124,7 +125,7 @@ async def test_login_malformed_request():
 async def test_login_server_error():
     url = f'{API_BASE_URL}/api/access/login'
     # Simulate server error by sending a request to an invalid endpoint
-    response = await httpx.post(url + '/invalid', json={'username': 'testuser', 'password': 'testpass'})
+    response = await httpx.post(f'{API_BASE_URL}/api/access/invalid', json={'username': 'testuser', 'password': 'testpass'})
 
     assert response.status_code == 404
     assert response.headers['Content-Type'] == 'application/json'
